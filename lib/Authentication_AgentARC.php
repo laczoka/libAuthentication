@@ -50,20 +50,20 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         parent::__construct($agentURI);
     }
 
-    protected function loadAgent() {
+    public function loadAgent() {
 
             $this->createStore();
 
     }
 
-    protected function loadErrors() {
+    public function loadErrors() {
 
         if (isset($this->ARCStore) && ($errs = $this->ARCStore->getErrors())) {
             $this->errors = $errs;
         }
     }
 
-    protected function getAgentProperties() {
+    public function getAgentProperties() {
 
         $agent    = NULL;
 
@@ -91,7 +91,7 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
         return($agent);
     }
 
-    protected function getAgentId() {
+    public function getAgentId() {
 
         $agentID = ($agentId = $this->getPrimaryProfile())?$agentId:$this->agentURI;
 
@@ -110,8 +110,6 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
             $this->ARCStore = $store;
         }
-
-        $this->ARCStore->reset();
 
         /* LOAD will call the Web reader, which will call the
 	   format detector, which in turn triggers the inclusion of an
@@ -493,8 +491,8 @@ class Authentication_AgentARC extends Authentication_AgentAbstract {
 
             if ($rows = $this->ARCStore->query($q, 'rows')) {
                 foreach ($rows as $row) {
-//                    print "primaryTopic " . $row['primaryTopic'] . "<br/>";
-                    return $row['primaryTopic'];
+                    if (0==strcmp($row['x'],$this->agentURI))
+                        return $row['primaryTopic'];
                 }
             }
         }

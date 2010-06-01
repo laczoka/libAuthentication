@@ -54,6 +54,7 @@ class Authentication_FoafSSLDelegate {
     private $ts                = NULL;
     private $allowedTimeWindow = 0;
     private $elapsedTime       = 0;
+    private $session           = NULL;
 
     const STATUS_AUTH_VIA_SESSION =
     "Authenticated via a session";
@@ -93,10 +94,10 @@ class Authentication_FoafSSLDelegate {
                                 $allowedTimeWindow = 300)
     {
         if ($createSession) {
-            $session = new Authentication_Session();
-            if ($session->isAuthenticated) {
-                $this->webid = $session->webid;
-                $this->isAuthenticated = $session->isAuthenticated;
+            $this->session = new Authentication_Session();
+            if ($this->session->isAuthenticated) {
+                $this->webid = $this->$session->webid;
+                $this->isAuthenticated = $this->$session->isAuthenticated;
                 $this->authnDiagnostic = self::STATUS_AUTH_VIA_SESSION;
                 return;
             }
@@ -188,9 +189,9 @@ class Authentication_FoafSSLDelegate {
 
         if ($createSession) {
             if ($this->isAuthenticated)
-                $session->setAuthenticatedWebid($this->webid);
+                $this->session->setAuthenticatedWebid($this->webid);
             else
-                $session->unsetAuthenticatedWebid();
+                $this->session->unsetAuthenticatedWebid();
         }
     }
 
