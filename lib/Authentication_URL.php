@@ -4,20 +4,24 @@
 // Filename   : Authentication_URL.php
 // Date       : 26th Feb 2010
 //
-// Copyright 2008-2010 foaf.me
+// Copyright (C) 2012 Melvin Carvalho, Akbar Hossain, László Török
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is furnished
+// to do so, subject to the following conditions:
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Affero General Public License for more details.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 //
-// You should have received a copy of the GNU Affero General Public License
-// along with this program. If not, see <http://www.gnu.org/licenses/>.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+// SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // "Everything should be made as simple as possible, but no simpler."
 // -- Albert Einstein
@@ -84,9 +88,11 @@ class Authentication_URL
         $this->parsedURL = $URL_string;
         $this->scheme = isset($URL_map['scheme']) ? $URL_map['scheme'] : 'http' ;
         $this->host = $URL_map['host'];
-        $this->port = isset($URL_map['port']) ? (int)$URL_map['port'] : 80;
+        $this->port = isset($URL_map['port']) ? (int)$URL_map['port'] : ($this->scheme == 'https') ? 443 : 80;
         $this->path = isset($URL_map['path']) ? $URL_map['path'] : '';
-        parse_str($URL_map['query'],$this->query);
+        if (!empty($URL_map['query'])) {
+            parse_str($URL_map['query'],$this->query);
+        }
         if (!$this->query)
                 $this->query = array();
 
@@ -97,7 +103,7 @@ class Authentication_URL
         $this->path .= isset ( $URL_map['query'] ) ? "?$URL_map[query]" : '';
         if (isset($URL_map['fragment']))
             $this->path .= '#'.$URL_map['fragment'];
-        
+
         return true;
     }
 }
@@ -112,7 +118,10 @@ class Authentication_SignedURL extends Authentication_URL
      */
     public function digitalSignature()
     {
-        return base64_decode($this->getQueryParameter('sig'));
+      //        return base64_decode($this->getQueryParameter('sig'));
+      $data = $this->getQueryParameter('sig');
+      $data = str_pad(strtr($data, '-_', '+/'), strlen($data) % 4, '=', STR_PAD_RIGHT);
+      return base64_decode($data);
     }
     /**
      * Returns the original parsed URL without the digital signature
@@ -122,7 +131,12 @@ class Authentication_SignedURL extends Authentication_URL
     {
         $sig = $this->getQueryParameter('sig');
         // parsedUrl except for &sig=[digital signature]
-        return substr($this->parsedURL, 0, -5-strlen(urlencode(isset($sig) ? $sig : NULL)));
+        //return substr($this->parsedURL, 0, -5-strlen(urlencode(isset($sig) ? $sig : NULL)));
+	$encodedsig=urlencode(isset($sig) ? $sig : NULL);
+        $encodedsig='&sig='.$encodedsig;
+        $startofsig=strpos($this->parsedURL, $encodedsig);
+	$start=substr($this->parsedURL, 0, $startofsig);
+        return $start;
     }
     /**
      * Parses the given URL string into a Authentication_SignedURL
